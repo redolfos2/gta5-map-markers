@@ -1,4 +1,6 @@
 
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+
 export interface MapMarker {
   id: string;
   x: number;
@@ -12,7 +14,7 @@ export interface MapMarker {
 export interface MarkerCategory {
   id: string;
   name: string;
-  icon: string;
+  icon: IconDefinition;
   color: string;
   isCustom?: boolean;
 }
@@ -23,10 +25,19 @@ export interface User {
   role: 'admin' | 'user';
 }
 
+// Импортируем иконки
+import { 
+  faStore, 
+  faGasPump, 
+  faHospital, 
+  faUniversity, 
+  faGamepad 
+} from '@fortawesome/free-solid-svg-icons';
+
 export const MARKER_CATEGORIES: MarkerCategory[] = [
-  { id: 'shop', name: 'Магазины', icon: '🏪', color: '#4ECCA3' },
-  { id: 'gas', name: 'Заправки', icon: '⛽', color: '#FFC107' },
-  { id: 'hospital', name: 'Больницы', icon: '🏥', color: '#FF6B35' },
-  { id: 'bank', name: 'Банки', icon: '🏦', color: '#8B5CF6' },
-  { id: 'entertainment', name: 'Развлечения', icon: '🎮', color: '#00D4FF' },
+  { id: 'shop', name: 'Магазины', icon: faStore, color: '#4ECCA3' },
+  { id: 'gas', name: 'Заправки', icon: faGasPump, color: '#FFC107' },
+  { id: 'hospital', name: 'Больницы', icon: faHospital, color: '#FF6B35' },
+  { id: 'bank', name: 'Банки', icon: faUniversity, color: '#8B5CF6' },
+  { id: 'entertainment', name: 'Развлечения', icon: faGamepad, color: '#00D4FF' },
 ];

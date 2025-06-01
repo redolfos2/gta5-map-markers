@@ -2,7 +2,11 @@
 import React, { useState } from 'react';
 import { MarkerCategory } from '@/types/map';
 import { Plus, Trash2 } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faStore } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { toast } from 'sonner';
+import IconSelector from './IconSelector';
 
 interface CategoryManagerProps {
   categories: MarkerCategory[];
@@ -18,18 +22,18 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({
   const [showAddForm, setShowAddForm] = useState(false);
   const [newCategory, setNewCategory] = useState({
     name: '',
-    icon: '',
+    icon: faStore as IconDefinition,
     color: '#4ECCA3'
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (newCategory.name.trim() && newCategory.icon.trim()) {
+    if (newCategory.name.trim()) {
       onAddCategory({
         ...newCategory,
         isCustom: true
       });
-      setNewCategory({ name: '', icon: '', color: '#4ECCA3' });
+      setNewCategory({ name: '', icon: faStore, color: '#4ECCA3' });
       setShowAddForm(false);
       toast.success('Категория добавлена!');
     }
@@ -63,18 +67,10 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({
                 required
               />
             </div>
-            <div>
-              <label className="block text-sm text-gray-300 mb-1">Иконка (эмодзи)</label>
-              <input
-                type="text"
-                value={newCategory.icon}
-                onChange={(e) => setNewCategory(prev => ({ ...prev, icon: e.target.value }))}
-                className="w-full px-3 py-2 bg-gta-dark border gta-border rounded text-white focus:outline-none focus:ring-2 focus:ring-gta-blue"
-                placeholder="🏠"
-                maxLength={2}
-                required
-              />
-            </div>
+            <IconSelector
+              selectedIcon={newCategory.icon}
+              onIconSelect={(icon) => setNewCategory(prev => ({ ...prev, icon }))}
+            />
             <div>
               <label className="block text-sm text-gray-300 mb-1">Цвет</label>
               <input
@@ -112,7 +108,10 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({
               className="flex items-center justify-between p-2 bg-gta-darker rounded border border-gray-600"
             >
               <div className="flex items-center gap-2">
-                <span style={{ color: category.color }}>{category.icon}</span>
+                <FontAwesomeIcon 
+                  icon={category.icon} 
+                  style={{ color: category.color }} 
+                />
                 <span className="text-white text-sm">{category.name}</span>
               </div>
               <button

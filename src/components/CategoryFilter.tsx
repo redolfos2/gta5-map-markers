@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { MarkerCategory } from '@/types/map';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 interface CategoryFilterProps {
   selectedCategories: string[];
@@ -61,7 +62,10 @@ const CategoryFilter: React.FC<CategoryFilterProps> = ({
                 boxShadow: isSelected ? `0 0 15px ${category.color}40` : undefined
               }}
             >
-              <span className="text-xl">{category.icon}</span>
+              <FontAwesomeIcon 
+                icon={category.icon} 
+                className="text-xl"
+              />
               <span className="flex-1 text-left">{category.name}</span>
               {category.isCustom && (
                 <span className="text-xs opacity-60">✨</span>

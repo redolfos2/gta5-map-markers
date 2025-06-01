@@ -2,6 +2,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { MapMarker, MarkerCategory, User } from '@/types/map';
 import { MapPin } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { toast } from 'sonner';
 
 interface GTAMapProps {
@@ -23,7 +24,6 @@ const GTAMap: React.FC<GTAMapProps> = ({
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [dragDistance, setDragDistance] = useState(0);
   const [showAddMarker, setShowAddMarker] = useState(false);
   const [newMarkerPos, setNewMarkerPos] = useState({ x: 0, y: 0 });
   const [hoveredMarker, setHoveredMarker] = useState<string | null>(null);
@@ -47,7 +47,6 @@ const GTAMap: React.FC<GTAMapProps> = ({
     if (e.button === 0) {
       setIsDragging(true);
       setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
-      setDragDistance(0);
     }
   }, [position]);
 
@@ -58,13 +57,6 @@ const GTAMap: React.FC<GTAMapProps> = ({
         y: e.clientY - dragStart.y
       };
       setPosition(newPosition);
-      
-      // Рассчитываем расстояние перетаскивания
-      const distance = Math.sqrt(
-        Math.pow(newPosition.x - (e.clientX - dragStart.x), 2) + 
-        Math.pow(newPosition.y - (e.clientY - dragStart.y), 2)
-      );
-      setDragDistance(prev => prev + distance);
     }
   }, [isDragging, dragStart]);
 
@@ -72,10 +64,9 @@ const GTAMap: React.FC<GTAMapProps> = ({
     setIsDragging(false);
   }, []);
 
-  const handleMapClick = useCallback((e: React.MouseEvent) => {
-    // Добавляем метку только если пользователь админ, не перетаскивал карту (расстояние < 5 пикселей)
-    // и не было перетаскивания
-    if (user.role === 'admin' && dragDistance < 5 && !isDragging) {
+  const handleDoubleClick = useCallback((e: React.MouseEvent) => {
+    // Добавляем метку только если пользователь админ и не было перетаскивания
+    if (user.role === 'admin' && !isDragging) {
       const rect = mapRef.current?.getBoundingClientRect();
       if (rect) {
         const x = (e.clientX - rect.left - position.x) / scale;
@@ -84,8 +75,7 @@ const GTAMap: React.FC<GTAMapProps> = ({
         setShowAddMarker(true);
       }
     }
-    setDragDistance(0);
-  }, [user.role, dragDistance, isDragging, position, scale]);
+  }, [user.role, isDragging, position, scale]);
 
   const addMarker = (title: string, description: string, category: MarkerCategory) => {
     onAddMarker({
@@ -110,7 +100,7 @@ const GTAMap: React.FC<GTAMapProps> = ({
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
-        onClick={handleMapClick}
+        onDoubleClick={handleDoubleClick}
         style={{
           backgroundImage: `
             radial-gradient(circle at 25% 25%, rgba(0, 212, 255, 0.1) 0%, transparent 50%),
@@ -152,9 +142,10 @@ const GTAMap: React.FC<GTAMapProps> = ({
               onMouseEnter={() => setHoveredMarker(marker.id)}
               onMouseLeave={() => setHoveredMarker(null)}
             >
-              <div className="text-2xl">
-                {marker.category.icon}
-              </div>
+              <FontAwesomeIcon 
+                icon={marker.category.icon} 
+                className="text-2xl"
+              />
               
               {/* Подсказка */}
               {hoveredMarker === marker.id && (
@@ -230,7 +221,7 @@ const GTAMap: React.FC<GTAMapProps> = ({
       {/* Инструкция для администратора */}
       {user.role === 'admin' && (
         <div className="absolute top-4 left-4 bg-gta-dark gta-border rounded px-3 py-1 text-sm text-gta-green">
-          Кликните на карту, чтобы добавить метку
+          Двойной клик на карту для добавления метки
         </div>
       )}
     </div>
@@ -300,7 +291,7 @@ const AddMarkerForm: React.FC<AddMarkerFormProps> = ({ onAdd, onCancel, availabl
         >
           {availableCategories.map(category => (
             <option key={category.id} value={category.id}>
-              {category.icon} {category.name}
+              {category.name}
             </option>
           ))}
         </select>
@@ -321,7 +312,7 @@ const AddMarkerForm: React.FC<AddMarkerFormProps> = ({ onAdd, onCancel, availabl
           Отмена
         </button>
       </div>
-    </form>
+    </div>
   );
 };
 
