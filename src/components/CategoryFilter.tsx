@@ -1,15 +1,17 @@
 
 import React from 'react';
-import { MarkerCategory, MARKER_CATEGORIES } from '@/types/map';
+import { MarkerCategory } from '@/types/map';
 
 interface CategoryFilterProps {
   selectedCategories: string[];
   onCategoryToggle: (categoryId: string) => void;
+  availableCategories: MarkerCategory[];
 }
 
 const CategoryFilter: React.FC<CategoryFilterProps> = ({
   selectedCategories,
-  onCategoryToggle
+  onCategoryToggle,
+  availableCategories
 }) => {
   const isAllSelected = selectedCategories.length === 0;
 
@@ -42,7 +44,7 @@ const CategoryFilter: React.FC<CategoryFilterProps> = ({
 
       {/* Список категорий */}
       <div className="space-y-2">
-        {MARKER_CATEGORIES.map((category) => {
+        {availableCategories.map((category) => {
           const isSelected = selectedCategories.includes(category.id);
           
           return (
@@ -61,6 +63,9 @@ const CategoryFilter: React.FC<CategoryFilterProps> = ({
             >
               <span className="text-xl">{category.icon}</span>
               <span className="flex-1 text-left">{category.name}</span>
+              {category.isCustom && (
+                <span className="text-xs opacity-60">✨</span>
+              )}
               {isSelected && (
                 <span className="text-sm opacity-80">✓</span>
               )}
@@ -74,7 +79,7 @@ const CategoryFilter: React.FC<CategoryFilterProps> = ({
         <div className="text-sm text-gray-400 text-center">
           {isAllSelected 
             ? 'Показаны все категории' 
-            : `Выбрано: ${selectedCategories.length} из ${MARKER_CATEGORIES.length}`
+            : `Выбрано: ${selectedCategories.length} из ${availableCategories.length}`
           }
         </div>
       </div>

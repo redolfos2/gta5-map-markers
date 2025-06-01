@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useCallback } from 'react';
-import { MapMarker, MarkerCategory, MARKER_CATEGORIES, User } from '@/types/map';
+import { MapMarker, MarkerCategory, User } from '@/types/map';
 import { MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -9,18 +9,21 @@ interface GTAMapProps {
   markers: MapMarker[];
   onAddMarker: (marker: Omit<MapMarker, 'id' | 'createdAt'>) => void;
   selectedCategories: string[];
+  availableCategories: MarkerCategory[];
 }
 
 const GTAMap: React.FC<GTAMapProps> = ({ 
   user, 
   markers, 
   onAddMarker, 
-  selectedCategories 
+  selectedCategories,
+  availableCategories
 }) => {
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [dragDistance, setDragDistance] = useState(0);
   const [showAddMarker, setShowAddMarker] = useState(false);
   const [newMarkerPos, setNewMarkerPos] = useState({ x: 0, y: 0 });
   const [hoveredMarker, setHoveredMarker] = useState<string | null>(null);
@@ -44,15 +47,24 @@ const GTAMap: React.FC<GTAMapProps> = ({
     if (e.button === 0) {
       setIsDragging(true);
       setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
+      setDragDistance(0);
     }
   }, [position]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (isDragging) {
-      setPosition({
+      const newPosition = {
         x: e.clientX - dragStart.x,
         y: e.clientY - dragStart.y
-      });
+      };
+      setPosition(newPosition);
+      
+      // Рассчитываем расстояние перетаскивания
+      const distance = Math.sqrt(
+        Math.pow(newPosition.x - (e.clientX - dragStart.x), 2) + 
+        Math.pow(newPosition.y - (e.clientY - dragStart.y), 2)
+      );
+      setDragDistance(prev => prev + distance);
     }
   }, [isDragging, dragStart]);
 
@@ -61,7 +73,9 @@ const GTAMap: React.FC<GTAMapProps> = ({
   }, []);
 
   const handleMapClick = useCallback((e: React.MouseEvent) => {
-    if (user.role === 'admin' && !isDragging) {
+    // Добавляем метку только если пользователь админ, не перетаскивал карту (расстояние < 5 пикселей)
+    // и не было перетаскивания
+    if (user.role === 'admin' && dragDistance < 5 && !isDragging) {
       const rect = mapRef.current?.getBoundingClientRect();
       if (rect) {
         const x = (e.clientX - rect.left - position.x) / scale;
@@ -70,7 +84,8 @@ const GTAMap: React.FC<GTAMapProps> = ({
         setShowAddMarker(true);
       }
     }
-  }, [user.role, isDragging, position, scale]);
+    setDragDistance(0);
+  }, [user.role, dragDistance, isDragging, position, scale]);
 
   const addMarker = (title: string, description: string, category: MarkerCategory) => {
     onAddMarker({
@@ -176,6 +191,7 @@ const GTAMap: React.FC<GTAMapProps> = ({
             <AddMarkerForm
               onAdd={addMarker}
               onCancel={() => setShowAddMarker(false)}
+              availableCategories={availableCategories}
             />
           </div>
         </div>
@@ -225,12 +241,13 @@ const GTAMap: React.FC<GTAMapProps> = ({
 interface AddMarkerFormProps {
   onAdd: (title: string, description: string, category: MarkerCategory) => void;
   onCancel: () => void;
+  availableCategories: MarkerCategory[];
 }
 
-const AddMarkerForm: React.FC<AddMarkerFormProps> = ({ onAdd, onCancel }) => {
+const AddMarkerForm: React.FC<AddMarkerFormProps> = ({ onAdd, onCancel, availableCategories }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<MarkerCategory>(MARKER_CATEGORIES[0]);
+  const [selectedCategory, setSelectedCategory] = useState<MarkerCategory>(availableCategories[0]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -276,12 +293,12 @@ const AddMarkerForm: React.FC<AddMarkerFormProps> = ({ onAdd, onCancel }) => {
         <select
           value={selectedCategory.id}
           onChange={(e) => {
-            const category = MARKER_CATEGORIES.find(c => c.id === e.target.value);
+            const category = availableCategories.find(c => c.id === e.target.value);
             if (category) setSelectedCategory(category);
           }}
           className="w-full px-3 py-2 bg-gta-darker border gta-border rounded text-white focus:outline-none focus:ring-2 focus:ring-gta-blue"
         >
-          {MARKER_CATEGORIES.map(category => (
+          {availableCategories.map(category => (
             <option key={category.id} value={category.id}>
               {category.icon} {category.name}
             </option>

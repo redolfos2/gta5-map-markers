@@ -2,9 +2,10 @@
 import React, { useState, useCallback } from 'react';
 import GTAMap from '@/components/GTAMap';
 import CategoryFilter from '@/components/CategoryFilter';
+import CategoryManager from '@/components/CategoryManager';
 import UserPanel from '@/components/UserPanel';
 import MarkerList from '@/components/MarkerList';
-import { MapMarker, User, MARKER_CATEGORIES } from '@/types/map';
+import { MapMarker, User, MARKER_CATEGORIES, MarkerCategory } from '@/types/map';
 import { toast } from 'sonner';
 
 const Index = () => {
@@ -13,6 +14,8 @@ const Index = () => {
     name: 'Player',
     role: 'admin'
   });
+
+  const [categories, setCategories] = useState<MarkerCategory[]>(MARKER_CATEGORIES);
 
   const [markers, setMarkers] = useState<MapMarker[]>([
     {
@@ -73,6 +76,28 @@ const Index = () => {
     setMarkers(prev => [...prev, marker]);
   }, []);
 
+  const handleAddCategory = useCallback((newCategory: Omit<MarkerCategory, 'id'>) => {
+    const category: MarkerCategory = {
+      ...newCategory,
+      id: Date.now().toString()
+    };
+    setCategories(prev => [...prev, category]);
+  }, []);
+
+  const handleDeleteCategory = useCallback((categoryId: string) => {
+    // Удаляем категорию только если она пользовательская
+    const categoryToDelete = categories.find(cat => cat.id === categoryId);
+    if (categoryToDelete?.isCustom) {
+      setCategories(prev => prev.filter(cat => cat.id !== categoryId));
+      
+      // Удаляем все метки этой категории
+      setMarkers(prev => prev.filter(marker => marker.category.id !== categoryId));
+      
+      // Убираем категорию из выбранных
+      setSelectedCategories(prev => prev.filter(id => id !== categoryId));
+    }
+  }, [categories]);
+
   const handleCategoryToggle = useCallback((categoryId: string) => {
     setSelectedCategories(prev => {
       if (prev.includes(categoryId)) {
@@ -122,9 +147,18 @@ const Index = () => {
             onRoleToggle={handleRoleToggle}
           />
           
+          {user.role === 'admin' && (
+            <CategoryManager
+              categories={categories}
+              onAddCategory={handleAddCategory}
+              onDeleteCategory={handleDeleteCategory}
+            />
+          )}
+          
           <CategoryFilter
             selectedCategories={selectedCategories}
             onCategoryToggle={handleCategoryToggle}
+            availableCategories={categories}
           />
           
           <MarkerList
@@ -141,6 +175,7 @@ const Index = () => {
             markers={markers}
             onAddMarker={handleAddMarker}
             selectedCategories={selectedCategories}
+            availableCategories={categories}
           />
         </div>
       </div>

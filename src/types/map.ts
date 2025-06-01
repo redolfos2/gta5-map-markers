@@ -14,6 +14,7 @@ export interface MarkerCategory {
   name: string;
   icon: string;
   color: string;
+  isCustom?: boolean;
 }
 
 export interface User {
