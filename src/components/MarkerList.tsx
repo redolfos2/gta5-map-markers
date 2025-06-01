@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { MapMarker } from '@/types/map';
 
 interface MarkerListProps {
@@ -40,12 +41,11 @@ const MarkerList: React.FC<MarkerListProps> = ({
               className="p-3 bg-gta-darker rounded border border-gray-600 hover:border-gta-blue cursor-pointer transition-all duration-200 hover:scale-102"
             >
               <div className="flex items-start gap-3">
-                <span 
+                <FontAwesomeIcon 
+                  icon={marker.category.icon}
                   className="text-xl"
                   style={{ color: marker.category.color }}
-                >
-                  {marker.category.icon}
-                </span>
+                />
                 <div className="flex-1 min-w-0">
                   <div className="font-medium text-white truncate">
                     {marker.title}

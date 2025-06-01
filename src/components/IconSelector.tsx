@@ -11,7 +11,7 @@ import {
   faHome,
   faBuilding,
   faSchool,
-  faRestaurant,
+  faUtensils,
   faCar,
   faPlane,
   faTrain,
@@ -27,7 +27,7 @@ import {
   faFilm,
   faBook,
   faCoffee,
-  faPizza,
+  faPizzaSlice,
   faUmbrellaBeach,
   faMountain
 } from '@fortawesome/free-solid-svg-icons';
@@ -39,10 +39,10 @@ interface IconSelectorProps {
 
 const availableIcons: IconDefinition[] = [
   faStore, faGasPump, faHospital, faUniversity, faGamepad,
-  faHome, faBuilding, faSchool, faRestaurant, faCar,
+  faHome, faBuilding, faSchool, faUtensils, faCar,
   faPlane, faTrain, faShoppingCart, faHeart, faStar,
   faMapMarkerAlt, faWifi, faPhone, faEnvelope, faCamera,
-  faMusic, faFilm, faBook, faCoffee, faPizza,
+  faMusic, faFilm, faBook, faCoffee, faPizzaSlice,
   faUmbrellaBeach, faMountain
 ];
 
