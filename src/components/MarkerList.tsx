@@ -1,22 +1,32 @@
 
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Trash2 } from 'lucide-react';
 import { MapMarker } from '@/types/map';
 
 interface MarkerListProps {
   markers: MapMarker[];
   selectedCategories: string[];
   onMarkerClick?: (marker: MapMarker) => void;
+  onDeleteMarker?: (markerId: string) => void;
 }
 
 const MarkerList: React.FC<MarkerListProps> = ({ 
   markers, 
   selectedCategories,
-  onMarkerClick 
+  onMarkerClick,
+  onDeleteMarker
 }) => {
   const filteredMarkers = markers.filter(marker => 
     selectedCategories.length === 0 || selectedCategories.includes(marker.category.id)
   );
+
+  const handleDeleteClick = (markerId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onDeleteMarker) {
+      onDeleteMarker(markerId);
+    }
+  };
 
   return (
     <div className="bg-gta-dark gta-border rounded-lg p-4">
@@ -43,7 +53,7 @@ const MarkerList: React.FC<MarkerListProps> = ({
               <div className="flex items-start gap-3">
                 <FontAwesomeIcon 
                   icon={marker.category.icon}
-                  className="text-xl"
+                  className="text-xl mt-1"
                   style={{ color: marker.category.color }}
                 />
                 <div className="flex-1 min-w-0">
@@ -69,6 +79,15 @@ const MarkerList: React.FC<MarkerListProps> = ({
                     </span>
                   </div>
                 </div>
+                {onDeleteMarker && (
+                  <button
+                    onClick={(e) => handleDeleteClick(marker.id, e)}
+                    className="text-red-400 hover:text-red-300 transition-colors p-1"
+                    title="Удалить метку"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
               </div>
             </div>
           ))

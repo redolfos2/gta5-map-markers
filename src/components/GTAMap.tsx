@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useCallback } from 'react';
 import { MapMarker, MarkerCategory, User } from '@/types/map';
-import { MapPin } from 'lucide-react';
+import { MapPin, Trash2 } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { toast } from 'sonner';
 
@@ -9,6 +9,7 @@ interface GTAMapProps {
   user: User;
   markers: MapMarker[];
   onAddMarker: (marker: Omit<MapMarker, 'id' | 'createdAt'>) => void;
+  onDeleteMarker?: (markerId: string) => void;
   selectedCategories: string[];
   availableCategories: MarkerCategory[];
 }
@@ -16,7 +17,8 @@ interface GTAMapProps {
 const GTAMap: React.FC<GTAMapProps> = ({ 
   user, 
   markers, 
-  onAddMarker, 
+  onAddMarker,
+  onDeleteMarker,
   selectedCategories,
   availableCategories
 }) => {
@@ -89,6 +91,15 @@ const GTAMap: React.FC<GTAMapProps> = ({
     toast.success('Метка добавлена!');
   };
 
+  const handleDeleteMarker = (markerId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onDeleteMarker) {
+      onDeleteMarker(markerId);
+      toast.success('Метка удалена!');
+    }
+    setHoveredMarker(null);
+  };
+
   return (
     <div className="relative w-full h-full overflow-hidden bg-gta-darker rounded-lg gta-border">
       {/* Карта */}
@@ -133,26 +144,40 @@ const GTAMap: React.FC<GTAMapProps> = ({
           {filteredMarkers.map((marker) => (
             <div
               key={marker.id}
-              className="absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer gta-marker"
+              className="absolute gta-marker"
               style={{
                 left: marker.x,
                 top: marker.y,
-                color: marker.category.color
+                color: marker.category.color,
+                transform: 'translate(-50%, -50%)'
               }}
               onMouseEnter={() => setHoveredMarker(marker.id)}
               onMouseLeave={() => setHoveredMarker(null)}
             >
               <FontAwesomeIcon 
                 icon={marker.category.icon} 
-                className="text-2xl"
+                className="text-2xl cursor-pointer"
               />
               
-              {/* Подсказка */}
+              {/* Подсказка - показывается выше иконки */}
               {hoveredMarker === marker.id && (
-                <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 bg-gta-dark border gta-border rounded-lg p-2 min-w-[200px] z-50">
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-gta-dark border gta-border rounded-lg p-3 min-w-[250px] z-50 pointer-events-auto">
                   <div className="text-sm font-semibold text-white">{marker.title}</div>
                   <div className="text-xs text-gray-300 mt-1">{marker.description}</div>
-                  <div className="text-xs text-gta-blue mt-1">{marker.category.name}</div>
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="text-xs text-gta-blue">{marker.category.name}</span>
+                    {user.role === 'admin' && onDeleteMarker && (
+                      <button
+                        onClick={(e) => handleDeleteMarker(marker.id, e)}
+                        className="text-red-400 hover:text-red-300 transition-colors"
+                        title="Удалить метку"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
+                  </div>
+                  {/* Стрелка указывающая на иконку */}
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gta-dark"></div>
                 </div>
               )}
             </div>
@@ -161,11 +186,12 @@ const GTAMap: React.FC<GTAMapProps> = ({
           {/* Предварительная метка для администратора */}
           {user.role === 'admin' && showAddMarker && (
             <div
-              className="absolute transform -translate-x-1/2 -translate-y-1/2 animate-pulse-glow"
+              className="absolute animate-pulse-glow"
               style={{
                 left: newMarkerPos.x,
                 top: newMarkerPos.y,
-                color: '#00D4FF'
+                color: '#00D4FF',
+                transform: 'translate(-50%, -50%)'
               }}
             >
               <MapPin size={24} />

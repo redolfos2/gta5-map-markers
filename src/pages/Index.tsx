@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import GTAMap from '@/components/GTAMap';
 import CategoryFilter from '@/components/CategoryFilter';
@@ -74,6 +73,10 @@ const Index = () => {
       createdAt: new Date()
     };
     setMarkers(prev => [...prev, marker]);
+  }, []);
+
+  const handleDeleteMarker = useCallback((markerId: string) => {
+    setMarkers(prev => prev.filter(marker => marker.id !== markerId));
   }, []);
 
   const handleAddCategory = useCallback((newCategory: Omit<MarkerCategory, 'id'>) => {
@@ -165,6 +168,7 @@ const Index = () => {
             markers={markers}
             selectedCategories={selectedCategories}
             onMarkerClick={handleMarkerClick}
+            onDeleteMarker={user.role === 'admin' ? handleDeleteMarker : undefined}
           />
         </div>
 
@@ -174,6 +178,7 @@ const Index = () => {
             user={user}
             markers={markers}
             onAddMarker={handleAddMarker}
+            onDeleteMarker={user.role === 'admin' ? handleDeleteMarker : undefined}
             selectedCategories={selectedCategories}
             availableCategories={categories}
           />
