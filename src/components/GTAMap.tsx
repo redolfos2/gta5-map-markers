@@ -312,7 +312,7 @@ const AddMarkerForm: React.FC<AddMarkerFormProps> = ({ onAdd, onCancel, availabl
           Отмена
         </button>
       </div>
-    </div>
+    </form>
   );
 };
 
