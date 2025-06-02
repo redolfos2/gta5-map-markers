@@ -102,7 +102,7 @@ const GTAMap: React.FC<GTAMapProps> = ({
 
   return (
     <div className="relative w-full h-full overflow-hidden bg-gta-darker rounded-lg gta-border">
-      {/* Карта с фоновым изображением GTA 5 */}
+      {/* Контейнер карты */}
       <div
         ref={mapRef}
         className="w-full h-full cursor-grab active:cursor-grabbing relative"
@@ -113,24 +113,37 @@ const GTAMap: React.FC<GTAMapProps> = ({
         onMouseLeave={handleMouseUp}
         onDoubleClick={handleDoubleClick}
         style={{
-          background: `
-            linear-gradient(rgba(15, 20, 25, 0.3), rgba(15, 20, 25, 0.3)),
-            url('/lovable-uploads/2b63f3e1-c58a-4feb-9d8f-019f56782f3a.png') center/cover no-repeat
-          `,
-          // Fallback если изображение не загружено
           backgroundColor: '#0F1419'
         }}
       >
-        {/* Контейнер для карты и меток */}
+        {/* Контейнер для карты и меток с трансформациями */}
         <div
           className="absolute inset-0"
           style={{
             transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`
           }}
         >
+          {/* Изображение карты GTA 5 */}
+          <div
+            className="absolute inset-0 w-full h-full"
+            style={{
+              backgroundImage: `url('/lovable-uploads/2b63f3e1-c58a-4feb-9d8f-019f56782f3a.png')`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+              minWidth: '100%',
+              minHeight: '100%',
+              width: '1200px',
+              height: '1200px'
+            }}
+          />
+
+          {/* Полупрозрачный слой для лучшей видимости меток */}
+          <div className="absolute inset-0 bg-black bg-opacity-20" />
+
           {/* Сетка поверх карты (опционально) */}
           <div
-            className="absolute inset-0 opacity-10 pointer-events-none"
+            className="absolute inset-0 opacity-5 pointer-events-none"
             style={{
               backgroundImage: `
                 linear-gradient(rgba(0, 212, 255, 0.3) 1px, transparent 1px),
