@@ -102,10 +102,10 @@ const GTAMap: React.FC<GTAMapProps> = ({
 
   return (
     <div className="relative w-full h-full overflow-hidden bg-gta-darker rounded-lg gta-border">
-      {/* Карта */}
+      {/* Карта с фоновым изображением GTA 5 */}
       <div
         ref={mapRef}
-        className="w-full h-full cursor-grab active:cursor-grabbing"
+        className="w-full h-full cursor-grab active:cursor-grabbing relative"
         onWheel={handleWheel}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
@@ -113,34 +113,34 @@ const GTAMap: React.FC<GTAMapProps> = ({
         onMouseLeave={handleMouseUp}
         onDoubleClick={handleDoubleClick}
         style={{
-          backgroundImage: `
-            radial-gradient(circle at 25% 25%, rgba(0, 212, 255, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 75% 75%, rgba(78, 204, 163, 0.1) 0%, transparent 50%),
-            linear-gradient(45deg, #0F1419 0%, #1a1f26 50%, #0F1419 100%)
+          background: `
+            linear-gradient(rgba(15, 20, 25, 0.3), rgba(15, 20, 25, 0.3)),
+            url('/gta5-map.jpg') center/cover no-repeat
           `,
-          backgroundSize: '100px 100px, 100px 100px, 100% 100%'
+          // Fallback если изображение не загружено
+          backgroundColor: '#0F1419'
         }}
       >
-        {/* Сетка карты */}
-        <div
-          className="absolute inset-0 opacity-20"
-          style={{
-            transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
-            backgroundImage: `
-              linear-gradient(rgba(0, 212, 255, 0.2) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(0, 212, 255, 0.2) 1px, transparent 1px)
-            `,
-            backgroundSize: '50px 50px'
-          }}
-        />
-
-        {/* Метки */}
+        {/* Контейнер для карты и меток */}
         <div
           className="absolute inset-0"
           style={{
             transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`
           }}
         >
+          {/* Сетка поверх карты (опционально) */}
+          <div
+            className="absolute inset-0 opacity-10 pointer-events-none"
+            style={{
+              backgroundImage: `
+                linear-gradient(rgba(0, 212, 255, 0.3) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 212, 255, 0.3) 1px, transparent 1px)
+              `,
+              backgroundSize: '50px 50px'
+            }}
+          />
+
+          {/* Метки */}
           {filteredMarkers.map((marker) => (
             <div
               key={marker.id}
@@ -149,7 +149,8 @@ const GTAMap: React.FC<GTAMapProps> = ({
                 left: marker.x,
                 top: marker.y,
                 color: marker.category.color,
-                transform: 'translate(-50%, -50%)'
+                transform: 'translate(-50%, -50%)',
+                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.8))'
               }}
               onMouseEnter={() => setHoveredMarker(marker.id)}
               onMouseLeave={() => setHoveredMarker(null)}
@@ -191,7 +192,8 @@ const GTAMap: React.FC<GTAMapProps> = ({
                 left: newMarkerPos.x,
                 top: newMarkerPos.y,
                 color: '#00D4FF',
-                transform: 'translate(-50%, -50%)'
+                transform: 'translate(-50%, -50%)',
+                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.8))'
               }}
             >
               <MapPin size={24} />
@@ -341,5 +343,11 @@ const AddMarkerForm: React.FC<AddMarkerFormProps> = ({ onAdd, onCancel, availabl
     </form>
   );
 };
+
+interface AddMarkerFormProps {
+  onAdd: (title: string, description: string, category: MarkerCategory) => void;
+  onCancel: () => void;
+  availableCategories: MarkerCategory[];
+}
 
 export default GTAMap;
