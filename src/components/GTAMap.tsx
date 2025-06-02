@@ -115,7 +115,7 @@ const GTAMap: React.FC<GTAMapProps> = ({
         style={{
           background: `
             linear-gradient(rgba(15, 20, 25, 0.3), rgba(15, 20, 25, 0.3)),
-            url('/gta5-map.jpg') center/cover no-repeat
+            url('/lovable-uploads/2b63f3e1-c58a-4feb-9d8f-019f56782f3a.png') center/cover no-repeat
           `,
           // Fallback если изображение не загружено
           backgroundColor: '#0F1419'
