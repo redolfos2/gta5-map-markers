@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useCallback } from 'react';
 import { MapMarker, MarkerCategory, User } from '@/types/map';
 import { MapPin, Trash2 } from 'lucide-react';
@@ -112,7 +113,7 @@ const GTAMap: React.FC<GTAMapProps> = ({
         onMouseLeave={handleMouseUp}
         onDoubleClick={handleDoubleClick}
         style={{
-          backgroundColor: '#1a2332'
+          backgroundColor: '#1862ad'
         }}
       >
         {/* Контейнер для карты и меток с трансформациями */}
