@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useCallback } from 'react';
 import { MapMarker, MarkerCategory, User } from '@/types/map';
 import { MapPin, Trash2 } from 'lucide-react';
@@ -113,7 +112,7 @@ const GTAMap: React.FC<GTAMapProps> = ({
         onMouseLeave={handleMouseUp}
         onDoubleClick={handleDoubleClick}
         style={{
-          backgroundColor: '#0F1419'
+          backgroundColor: '#1a2332'
         }}
       >
         {/* Контейнер для карты и меток с трансформациями */}
@@ -133,13 +132,10 @@ const GTAMap: React.FC<GTAMapProps> = ({
               backgroundRepeat: 'no-repeat',
               minWidth: '100%',
               minHeight: '100%',
-              width: '1200px',
-              height: '1200px'
+              width: '1800px',
+              height: '1800px'
             }}
           />
-
-          {/* Полупрозрачный слой для лучшей видимости меток */}
-          <div className="absolute inset-0 bg-black bg-opacity-20" />
 
           {/* Сетка поверх карты (опционально) */}
           <div
