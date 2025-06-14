@@ -1,10 +1,12 @@
+
 import React, { useState, useCallback } from 'react';
 import GTAMap from '@/components/GTAMap';
 import CategoryFilter from '@/components/CategoryFilter';
 import CategoryManager from '@/components/CategoryManager';
 import UserPanel from '@/components/UserPanel';
 import MarkerList from '@/components/MarkerList';
-import { MapMarker, User, MARKER_CATEGORIES, MarkerCategory } from '@/types/map';
+import ZoneManager from '@/components/ZoneManager';
+import { MapMarker, User, MARKER_CATEGORIES, MarkerCategory, MapZone } from '@/types/map';
 import { toast } from 'sonner';
 
 const Index = () => {
@@ -15,6 +17,7 @@ const Index = () => {
   });
 
   const [categories, setCategories] = useState<MarkerCategory[]>(MARKER_CATEGORIES);
+  const [isDrawingMode, setIsDrawingMode] = useState(false);
 
   const [markers, setMarkers] = useState<MapMarker[]>([
     {
@@ -64,6 +67,8 @@ const Index = () => {
     }
   ]);
 
+  const [zones, setZones] = useState<MapZone[]>([]);
+
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   const handleAddMarker = useCallback((newMarker: Omit<MapMarker, 'id' | 'createdAt'>) => {
@@ -77,6 +82,29 @@ const Index = () => {
 
   const handleDeleteMarker = useCallback((markerId: string) => {
     setMarkers(prev => prev.filter(marker => marker.id !== markerId));
+  }, []);
+
+  const handleAddZone = useCallback((newZone: Omit<MapZone, 'id' | 'createdAt'>) => {
+    const zone: MapZone = {
+      ...newZone,
+      id: Date.now().toString(),
+      createdAt: new Date()
+    };
+    setZones(prev => [...prev, zone]);
+  }, []);
+
+  const handleDeleteZone = useCallback((zoneId: string) => {
+    setZones(prev => prev.filter(zone => zone.id !== zoneId));
+  }, []);
+
+  const handleEditZone = useCallback((zoneId: string, updates: Partial<MapZone>) => {
+    setZones(prev => prev.map(zone => 
+      zone.id === zoneId ? { ...zone, ...updates } : zone
+    ));
+  }, []);
+
+  const handleToggleDrawing = useCallback(() => {
+    setIsDrawingMode(prev => !prev);
   }, []);
 
   const handleAddCategory = useCallback((newCategory: Omit<MarkerCategory, 'id'>) => {
@@ -151,11 +179,22 @@ const Index = () => {
           />
           
           {user.role === 'admin' && (
-            <CategoryManager
-              categories={categories}
-              onAddCategory={handleAddCategory}
-              onDeleteCategory={handleDeleteCategory}
-            />
+            <>
+              <CategoryManager
+                categories={categories}
+                onAddCategory={handleAddCategory}
+                onDeleteCategory={handleDeleteCategory}
+              />
+              
+              <ZoneManager
+                zones={zones}
+                onAddZone={handleAddZone}
+                onDeleteZone={handleDeleteZone}
+                onEditZone={handleEditZone}
+                isDrawingMode={isDrawingMode}
+                onToggleDrawing={handleToggleDrawing}
+              />
+            </>
           )}
           
           <CategoryFilter
@@ -177,10 +216,15 @@ const Index = () => {
           <GTAMap
             user={user}
             markers={markers}
+            zones={zones}
             onAddMarker={handleAddMarker}
             onDeleteMarker={user.role === 'admin' ? handleDeleteMarker : undefined}
+            onAddZone={handleAddZone}
+            onDeleteZone={user.role === 'admin' ? handleDeleteZone : undefined}
             selectedCategories={selectedCategories}
             availableCategories={categories}
+            isDrawingMode={isDrawingMode}
+            onToggleDrawing={handleToggleDrawing}
           />
         </div>
       </div>
