@@ -1,4 +1,5 @@
-import React, { useState, useRef, useCallback } from 'react';
+
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { MapMarker, MarkerCategory, User } from '@/types/map';
 import { MapPin, Trash2 } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -21,8 +22,8 @@ const GTAMap: React.FC<GTAMapProps> = ({
   selectedCategories,
   availableCategories
 }) => {
-  const [scale, setScale] = useState(0.8);
-  const [position, setPosition] = useState({ x: -400, y: -400 });
+  const [scale, setScale] = useState(0.5);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [showAddMarker, setShowAddMarker] = useState(false);
@@ -30,6 +31,17 @@ const GTAMap: React.FC<GTAMapProps> = ({
   const [hoveredMarker, setHoveredMarker] = useState<string | null>(null);
   
   const mapRef = useRef<HTMLDivElement>(null);
+  const MAP_SIZE = 2400;
+
+  // Инициализация позиции карты по центру
+  useEffect(() => {
+    if (mapRef.current) {
+      const containerRect = mapRef.current.getBoundingClientRect();
+      const centerX = containerRect.width / 2 - (MAP_SIZE * scale) / 2;
+      const centerY = containerRect.height / 2 - (MAP_SIZE * scale) / 2;
+      setPosition({ x: centerX, y: centerY });
+    }
+  }, [scale]);
 
   const filteredMarkers = markers.filter(marker => 
     selectedCategories.length === 0 || selectedCategories.includes(marker.category.id)
@@ -37,12 +49,29 @@ const GTAMap: React.FC<GTAMapProps> = ({
 
   const handleWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault();
+    
+    if (!mapRef.current) return;
+    
+    const rect = mapRef.current.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    
+    // Вычисляем точку на карте, на которую указывает курсор
+    const mapX = (mouseX - position.x) / scale;
+    const mapY = (mouseY - position.y) / scale;
+    
     const zoomFactor = 0.1;
     const newScale = e.deltaY > 0 
-      ? Math.max(0.3, scale - zoomFactor)
+      ? Math.max(0.2, scale - zoomFactor)
       : Math.min(2, scale + zoomFactor);
+    
+    // Пересчитываем позицию так, чтобы точка под курсором осталась на месте
+    const newX = mouseX - mapX * newScale;
+    const newY = mouseY - mapY * newScale;
+    
     setScale(newScale);
-  }, [scale]);
+    setPosition({ x: newX, y: newY });
+  }, [scale, position]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (e.button === 0) {
@@ -99,6 +128,16 @@ const GTAMap: React.FC<GTAMapProps> = ({
     setHoveredMarker(null);
   };
 
+  const resetView = () => {
+    if (mapRef.current) {
+      const containerRect = mapRef.current.getBoundingClientRect();
+      const centerX = containerRect.width / 2 - (MAP_SIZE * 0.5) / 2;
+      const centerY = containerRect.height / 2 - (MAP_SIZE * 0.5) / 2;
+      setScale(0.5);
+      setPosition({ x: centerX, y: centerY });
+    }
+  };
+
   return (
     <div className="relative w-full h-full overflow-hidden bg-gta-darker rounded-lg gta-border">
       {/* Контейнер карты */}
@@ -131,8 +170,8 @@ const GTAMap: React.FC<GTAMapProps> = ({
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               backgroundRepeat: 'no-repeat',
-              width: '2400px',
-              height: '2400px'
+              width: `${MAP_SIZE}px`,
+              height: `${MAP_SIZE}px`
             }}
           />
 
@@ -145,8 +184,8 @@ const GTAMap: React.FC<GTAMapProps> = ({
                 linear-gradient(90deg, rgba(0, 212, 255, 0.3) 1px, transparent 1px)
               `,
               backgroundSize: '50px 50px',
-              width: '2400px',
-              height: '2400px'
+              width: `${MAP_SIZE}px`,
+              height: `${MAP_SIZE}px`
             }}
           />
 
@@ -229,22 +268,45 @@ const GTAMap: React.FC<GTAMapProps> = ({
       {/* Элементы управления */}
       <div className="absolute bottom-4 right-4 flex flex-col gap-2">
         <button
-          onClick={() => setScale(Math.min(2, scale + 0.2))}
+          onClick={() => {
+            const newScale = Math.min(2, scale + 0.2);
+            if (mapRef.current) {
+              const rect = mapRef.current.getBoundingClientRect();
+              const centerX = rect.width / 2;
+              const centerY = rect.height / 2;
+              const mapX = (centerX - position.x) / scale;
+              const mapY = (centerY - position.y) / scale;
+              const newX = centerX - mapX * newScale;
+              const newY = centerY - mapY * newScale;
+              setScale(newScale);
+              setPosition({ x: newX, y: newY });
+            }
+          }}
           className="bg-gta-dark gta-border rounded p-2 text-gta-blue hover:bg-gta-blue hover:text-gta-dark transition-colors"
         >
           +
         </button>
         <button
-          onClick={() => setScale(Math.max(0.3, scale - 0.2))}
+          onClick={() => {
+            const newScale = Math.max(0.2, scale - 0.2);
+            if (mapRef.current) {
+              const rect = mapRef.current.getBoundingClientRect();
+              const centerX = rect.width / 2;
+              const centerY = rect.height / 2;
+              const mapX = (centerX - position.x) / scale;
+              const mapY = (centerY - position.y) / scale;
+              const newX = centerX - mapX * newScale;
+              const newY = centerY - mapY * newScale;
+              setScale(newScale);
+              setPosition({ x: newX, y: newY });
+            }
+          }}
           className="bg-gta-dark gta-border rounded p-2 text-gta-blue hover:bg-gta-blue hover:text-gta-dark transition-colors"
         >
           -
         </button>
         <button
-          onClick={() => {
-            setScale(0.8);
-            setPosition({ x: -400, y: -400 });
-          }}
+          onClick={resetView}
           className="bg-gta-dark gta-border rounded p-2 text-gta-blue hover:bg-gta-blue hover:text-gta-dark transition-colors text-xs"
         >
           Reset
