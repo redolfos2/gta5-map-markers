@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useCallback } from 'react';
 import { MapMarker, MarkerCategory, User } from '@/types/map';
 import { MapPin, Trash2 } from 'lucide-react';
@@ -22,8 +21,8 @@ const GTAMap: React.FC<GTAMapProps> = ({
   selectedCategories,
   availableCategories
 }) => {
-  const [scale, setScale] = useState(1);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [scale, setScale] = useState(0.8);
+  const [position, setPosition] = useState({ x: -400, y: -400 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [showAddMarker, setShowAddMarker] = useState(false);
@@ -40,8 +39,8 @@ const GTAMap: React.FC<GTAMapProps> = ({
     e.preventDefault();
     const zoomFactor = 0.1;
     const newScale = e.deltaY > 0 
-      ? Math.max(0.5, scale - zoomFactor)
-      : Math.min(3, scale + zoomFactor);
+      ? Math.max(0.3, scale - zoomFactor)
+      : Math.min(2, scale + zoomFactor);
     setScale(newScale);
   }, [scale]);
 
@@ -118,23 +117,22 @@ const GTAMap: React.FC<GTAMapProps> = ({
       >
         {/* Контейнер для карты и меток с трансформациями */}
         <div
-          className="absolute inset-0"
+          className="absolute"
           style={{
-            transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`
+            transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
+            transformOrigin: '0 0'
           }}
         >
           {/* Изображение карты GTA 5 */}
           <div
-            className="absolute inset-0 w-full h-full"
+            className="relative"
             style={{
               backgroundImage: `url('/lovable-uploads/2b63f3e1-c58a-4feb-9d8f-019f56782f3a.png')`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               backgroundRepeat: 'no-repeat',
-              minWidth: '100%',
-              minHeight: '100%',
-              width: '1800px',
-              height: '1800px'
+              width: '2400px',
+              height: '2400px'
             }}
           />
 
@@ -146,7 +144,9 @@ const GTAMap: React.FC<GTAMapProps> = ({
                 linear-gradient(rgba(0, 212, 255, 0.3) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(0, 212, 255, 0.3) 1px, transparent 1px)
               `,
-              backgroundSize: '50px 50px'
+              backgroundSize: '50px 50px',
+              width: '2400px',
+              height: '2400px'
             }}
           />
 
@@ -229,21 +229,21 @@ const GTAMap: React.FC<GTAMapProps> = ({
       {/* Элементы управления */}
       <div className="absolute bottom-4 right-4 flex flex-col gap-2">
         <button
-          onClick={() => setScale(Math.min(3, scale + 0.2))}
+          onClick={() => setScale(Math.min(2, scale + 0.2))}
           className="bg-gta-dark gta-border rounded p-2 text-gta-blue hover:bg-gta-blue hover:text-gta-dark transition-colors"
         >
           +
         </button>
         <button
-          onClick={() => setScale(Math.max(0.5, scale - 0.2))}
+          onClick={() => setScale(Math.max(0.3, scale - 0.2))}
           className="bg-gta-dark gta-border rounded p-2 text-gta-blue hover:bg-gta-blue hover:text-gta-dark transition-colors"
         >
           -
         </button>
         <button
           onClick={() => {
-            setScale(1);
-            setPosition({ x: 0, y: 0 });
+            setScale(0.8);
+            setPosition({ x: -400, y: -400 });
           }}
           className="bg-gta-dark gta-border rounded p-2 text-gta-blue hover:bg-gta-blue hover:text-gta-dark transition-colors text-xs"
         >
@@ -353,11 +353,5 @@ const AddMarkerForm: React.FC<AddMarkerFormProps> = ({ onAdd, onCancel, availabl
     </form>
   );
 };
-
-interface AddMarkerFormProps {
-  onAdd: (title: string, description: string, category: MarkerCategory) => void;
-  onCancel: () => void;
-  availableCategories: MarkerCategory[];
-}
 
 export default GTAMap;
