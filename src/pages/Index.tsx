@@ -5,6 +5,7 @@ import CategoryManager from '@/components/CategoryManager';
 import UserPanel from '@/components/UserPanel';
 import MarkerList from '@/components/MarkerList';
 import ZoneManager from '@/components/ZoneManager';
+import MapBackgroundManager from '@/components/MapBackgroundManager';
 import { MapMarker, User, MARKER_CATEGORIES, MarkerCategory, MapZone } from '@/types/map';
 import { toast } from 'sonner';
 
@@ -18,6 +19,7 @@ const Index = () => {
   const [categories, setCategories] = useState<MarkerCategory[]>(MARKER_CATEGORIES);
   const [isDrawingMode, setIsDrawingMode] = useState(false);
   const [focusedZone, setFocusedZone] = useState<string | null>(null);
+  const [customMapBackground, setCustomMapBackground] = useState<string | null>(null);
 
   const [markers, setMarkers] = useState<MapMarker[]>([
     {
@@ -166,6 +168,10 @@ const Index = () => {
     toast.info(`${marker.title}: ${marker.description}`);
   }, []);
 
+  const handleBackgroundChange = useCallback((backgroundUrl: string | null) => {
+    setCustomMapBackground(backgroundUrl);
+  }, []);
+
   return (
     <div className="min-h-screen bg-gta-darker">
       {/* Заголовок */}
@@ -195,6 +201,11 @@ const Index = () => {
           
           {user.role === 'admin' && (
             <>
+              <MapBackgroundManager
+                currentBackground={customMapBackground}
+                onBackgroundChange={handleBackgroundChange}
+              />
+              
               <CategoryManager
                 categories={categories}
                 onAddCategory={handleAddCategory}
@@ -240,6 +251,7 @@ const Index = () => {
             availableCategories={categories}
             focusedZone={focusedZone}
             onZoneFocus={handleZoneFocus}
+            customMapImage={customMapBackground}
           />
         </div>
       </div>

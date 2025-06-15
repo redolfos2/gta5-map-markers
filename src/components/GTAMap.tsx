@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { MapMarker, MarkerCategory, User, MapZone, ZONE_TYPES } from '@/types/map';
 import { Trash2 } from 'lucide-react';
@@ -15,6 +14,7 @@ interface GTAMapProps {
   availableCategories: MarkerCategory[];
   focusedZone?: string | null;
   onZoneFocus?: (zoneId: string | null) => void;
+  customMapImage?: string;
 }
 
 const GTAMap: React.FC<GTAMapProps> = ({ 
@@ -26,7 +26,8 @@ const GTAMap: React.FC<GTAMapProps> = ({
   selectedCategories,
   availableCategories,
   focusedZone,
-  onZoneFocus
+  onZoneFocus,
+  customMapImage
 }) => {
   const [scale, setScale] = useState(0.5);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -36,16 +37,19 @@ const GTAMap: React.FC<GTAMapProps> = ({
   const [hoveredZone, setHoveredZone] = useState<string | null>(null);
   
   const mapRef = useRef<HTMLDivElement>(null);
-  const MAP_SIZE = 2400;
-  const TILES_COUNT = 10;
-  const TILE_SIZE = MAP_SIZE / TILES_COUNT;
+  const MAP_WIDTH = 7 * 240; // 7 столбцов по 240px
+  const MAP_HEIGHT = 10 * 240; // 10 строк по 240px
+  const COLUMNS = 7;
+  const ROWS = 10;
+  const TILE_WIDTH = MAP_WIDTH / COLUMNS;
+  const TILE_HEIGHT = MAP_HEIGHT / ROWS;
 
   // Инициализация позиции карты по центру
   useEffect(() => {
     if (mapRef.current) {
       const containerRect = mapRef.current.getBoundingClientRect();
-      const centerX = containerRect.width / 2 - (MAP_SIZE * scale) / 2;
-      const centerY = containerRect.height / 2 - (MAP_SIZE * scale) / 2;
+      const centerX = containerRect.width / 2 - (MAP_WIDTH * scale) / 2;
+      const centerY = containerRect.height / 2 - (MAP_HEIGHT * scale) / 2;
       setPosition({ x: centerX, y: centerY });
     }
   }, []);
@@ -132,8 +136,8 @@ const GTAMap: React.FC<GTAMapProps> = ({
   const resetView = () => {
     if (mapRef.current) {
       const containerRect = mapRef.current.getBoundingClientRect();
-      const centerX = containerRect.width / 2 - (MAP_SIZE * 0.5) / 2;
-      const centerY = containerRect.height / 2 - (MAP_SIZE * 0.5) / 2;
+      const centerX = containerRect.width / 2 - (MAP_WIDTH * 0.5) / 2;
+      const centerY = containerRect.height / 2 - (MAP_HEIGHT * 0.5) / 2;
       setScale(0.5);
       setPosition({ x: centerX, y: centerY });
     }
@@ -189,14 +193,14 @@ const GTAMap: React.FC<GTAMapProps> = ({
     return `${pathData}Z`;
   };
 
-  // Функция для создания сетки тайлов
+  // Функция для создания сетки тайлов (исправленная для 7x10)
   const renderTileGrid = () => {
     const tiles = [];
-    for (let row = 0; row < TILES_COUNT; row++) {
-      for (let col = 0; col < TILES_COUNT; col++) {
-        const x = col * TILE_SIZE;
-        const y = row * TILE_SIZE;
-        const tileName = `${col + 1}x${row + 1}`;
+    for (let row = 0; row < ROWS; row++) {
+      for (let col = 0; col < COLUMNS; col++) {
+        const x = col * TILE_WIDTH;
+        const y = row * TILE_HEIGHT;
+        const tileName = `${col}x${row}`;
         
         tiles.push(
           <div
@@ -205,8 +209,8 @@ const GTAMap: React.FC<GTAMapProps> = ({
             style={{
               left: x,
               top: y,
-              width: TILE_SIZE,
-              height: TILE_SIZE,
+              width: TILE_WIDTH,
+              height: TILE_HEIGHT,
               fontSize: Math.max(8, 12 * scale)
             }}
           >
@@ -230,7 +234,7 @@ const GTAMap: React.FC<GTAMapProps> = ({
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
         style={{
-          backgroundColor: '#1862ad'
+          backgroundColor: customMapImage ? 'transparent' : '#1862ad'
         }}
       >
         {/* Контейнер для карты и меток с трансформациями */}
@@ -241,16 +245,19 @@ const GTAMap: React.FC<GTAMapProps> = ({
             transformOrigin: '0 0'
           }}
         >
-          {/* Изображение карты GTA 5 */}
+          {/* Изображение карты */}
           <div
             className="relative"
             style={{
-              backgroundImage: `url('/lovable-uploads/2b63f3e1-c58a-4feb-9d8f-019f56782f3a.png')`,
+              backgroundImage: customMapImage 
+                ? `url('${customMapImage}')` 
+                : `url('/lovable-uploads/2b63f3e1-c58a-4feb-9d8f-019f56782f3a.png')`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               backgroundRepeat: 'no-repeat',
-              width: `${MAP_SIZE}px`,
-              height: `${MAP_SIZE}px`
+              width: `${MAP_WIDTH}px`,
+              height: `${MAP_HEIGHT}px`,
+              backgroundColor: customMapImage ? 'transparent' : '#1862ad'
             }}
           />
 
@@ -260,8 +267,8 @@ const GTAMap: React.FC<GTAMapProps> = ({
           {/* SVG для зон */}
           <svg
             className="absolute inset-0 pointer-events-none"
-            width={MAP_SIZE}
-            height={MAP_SIZE}
+            width={MAP_WIDTH}
+            height={MAP_HEIGHT}
             style={{ zIndex: 1 }}
           >
             {/* Отрисовка зон */}
