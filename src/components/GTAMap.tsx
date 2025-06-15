@@ -29,7 +29,7 @@ const GTAMap: React.FC<GTAMapProps> = ({
   onZoneFocus,
   customMapImage
 }) => {
-  const [scale, setScale] = useState(0.5);
+  const [scale, setScale] = useState(0.8);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
@@ -37,8 +37,10 @@ const GTAMap: React.FC<GTAMapProps> = ({
   const [hoveredZone, setHoveredZone] = useState<string | null>(null);
   
   const mapRef = useRef<HTMLDivElement>(null);
-  const MAP_WIDTH = 7 * 240; // 7 столбцов по 240px
-  const MAP_HEIGHT = 10 * 240; // 10 строк по 240px
+  
+  // Увеличиваем размеры карты для правильного отображения
+  const MAP_WIDTH = 7 * 400; // 7 столбцов по 400px каждый
+  const MAP_HEIGHT = 10 * 400; // 10 строк по 400px каждый
   const COLUMNS = 7;
   const ROWS = 10;
   const TILE_WIDTH = MAP_WIDTH / COLUMNS;
@@ -52,7 +54,7 @@ const GTAMap: React.FC<GTAMapProps> = ({
       const centerY = containerRect.height / 2 - (MAP_HEIGHT * scale) / 2;
       setPosition({ x: centerX, y: centerY });
     }
-  }, []);
+  }, [scale]);
 
   // Обработка фокуса на зону
   useEffect(() => {
@@ -92,8 +94,8 @@ const GTAMap: React.FC<GTAMapProps> = ({
     
     const zoomFactor = 0.1;
     const newScale = e.deltaY > 0 
-      ? Math.max(0.2, scale - zoomFactor)
-      : Math.min(2, scale + zoomFactor);
+      ? Math.max(0.3, scale - zoomFactor)
+      : Math.min(1.5, scale + zoomFactor);
     
     // Пересчитываем позицию так, чтобы точка под курсором осталась на месте
     const newX = mouseX - mapX * newScale;
@@ -136,9 +138,9 @@ const GTAMap: React.FC<GTAMapProps> = ({
   const resetView = () => {
     if (mapRef.current) {
       const containerRect = mapRef.current.getBoundingClientRect();
-      const centerX = containerRect.width / 2 - (MAP_WIDTH * 0.5) / 2;
-      const centerY = containerRect.height / 2 - (MAP_HEIGHT * 0.5) / 2;
-      setScale(0.5);
+      const centerX = containerRect.width / 2 - (MAP_WIDTH * 0.8) / 2;
+      const centerY = containerRect.height / 2 - (MAP_HEIGHT * 0.8) / 2;
+      setScale(0.8);
       setPosition({ x: centerX, y: centerY });
     }
   };
@@ -153,7 +155,7 @@ const GTAMap: React.FC<GTAMapProps> = ({
     const mapX = (centerX - position.x) / scale;
     const mapY = (centerY - position.y) / scale;
     
-    const newScale = Math.min(2, scale + 0.2);
+    const newScale = Math.min(1.5, scale + 0.2);
     
     const newX = centerX - mapX * newScale;
     const newY = centerY - mapY * newScale;
@@ -172,7 +174,7 @@ const GTAMap: React.FC<GTAMapProps> = ({
     const mapX = (centerX - position.x) / scale;
     const mapY = (centerY - position.y) / scale;
     
-    const newScale = Math.max(0.2, scale - 0.2);
+    const newScale = Math.max(0.3, scale - 0.2);
     
     const newX = centerX - mapX * newScale;
     const newY = centerY - mapY * newScale;
@@ -193,7 +195,7 @@ const GTAMap: React.FC<GTAMapProps> = ({
     return `${pathData}Z`;
   };
 
-  // Функция для создания сетки тайлов (исправленная для 7x10)
+  // Функция для создания сетки тайлов
   const renderTileGrid = () => {
     const tiles = [];
     for (let row = 0; row < ROWS; row++) {
@@ -205,16 +207,29 @@ const GTAMap: React.FC<GTAMapProps> = ({
         tiles.push(
           <div
             key={tileName}
-            className="absolute border border-gray-400/30 flex items-center justify-center text-gray-400/50 text-xs pointer-events-none"
+            className="absolute border border-gray-400/20"
             style={{
               left: x,
               top: y,
               width: TILE_WIDTH,
               height: TILE_HEIGHT,
-              fontSize: Math.max(8, 12 * scale)
+              backgroundImage: customMapImage 
+                ? `url('${customMapImage}')` 
+                : `url('/lovable-uploads/2b63f3e1-c58a-4feb-9d8f-019f56782f3a.png')`,
+              backgroundSize: `${MAP_WIDTH}px ${MAP_HEIGHT}px`,
+              backgroundPosition: `-${x}px -${y}px`,
+              backgroundRepeat: 'no-repeat'
             }}
           >
-            {scale > 0.3 && tileName}
+            {/* Название тайла при большом масштабе */}
+            {scale > 0.6 && (
+              <div 
+                className="absolute top-1 left-1 text-xs text-white/60 font-mono bg-black/20 px-1 rounded pointer-events-none"
+                style={{ fontSize: Math.max(8, 10 * scale) }}
+              >
+                {tileName}
+              </div>
+            )}
           </div>
         );
       }
@@ -233,9 +248,7 @@ const GTAMap: React.FC<GTAMapProps> = ({
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
-        style={{
-          backgroundColor: customMapImage ? 'transparent' : '#1862ad'
-        }}
+        style={{ backgroundColor: '#1862ad' }}
       >
         {/* Контейнер для карты и меток с трансформациями */}
         <div
@@ -245,24 +258,18 @@ const GTAMap: React.FC<GTAMapProps> = ({
             transformOrigin: '0 0'
           }}
         >
-          {/* Изображение карты */}
+          {/* Основа карты */}
           <div
             className="relative"
             style={{
-              backgroundImage: customMapImage 
-                ? `url('${customMapImage}')` 
-                : `url('/lovable-uploads/2b63f3e1-c58a-4feb-9d8f-019f56782f3a.png')`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat',
               width: `${MAP_WIDTH}px`,
               height: `${MAP_HEIGHT}px`,
-              backgroundColor: customMapImage ? 'transparent' : '#1862ad'
+              backgroundColor: '#1862ad'
             }}
-          />
-
-          {/* Сетка тайлов */}
-          {renderTileGrid()}
+          >
+            {/* Тайлы карты */}
+            {renderTileGrid()}
+          </div>
 
           {/* SVG для зон */}
           <svg

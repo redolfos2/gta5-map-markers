@@ -21,11 +21,12 @@ const Index = () => {
   const [focusedZone, setFocusedZone] = useState<string | null>(null);
   const [customMapBackground, setCustomMapBackground] = useState<string | null>(null);
 
+  // Обновляем координаты меток для новых размеров карты (7x10 тайлов по 400px)
   const [markers, setMarkers] = useState<MapMarker[]>([
     {
       id: '1',
-      x: 300,
-      y: 200,
+      x: 800,  // Центр левой части карты
+      y: 600,
       title: 'Центральный магазин',
       description: 'Большой торговый центр с широким ассортиментом товаров',
       category: MARKER_CATEGORIES[0], // Магазины
@@ -33,8 +34,8 @@ const Index = () => {
     },
     {
       id: '2',
-      x: 500,
-      y: 350,
+      x: 1400, // Центр карты
+      y: 1200,
       title: 'Заправка Los Santos',
       description: 'Круглосуточная заправочная станция с мини-маркетом',
       category: MARKER_CATEGORIES[1], // Заправки
@@ -42,8 +43,8 @@ const Index = () => {
     },
     {
       id: '3',
-      x: 150,
-      y: 400,
+      x: 600,  // Левая часть карты
+      y: 1800,
       title: 'Больница общего профиля',
       description: 'Главная больница города с отделением скорой помощи',
       category: MARKER_CATEGORIES[2], // Больницы
@@ -51,8 +52,8 @@ const Index = () => {
     },
     {
       id: '4',
-      x: 600,
-      y: 150,
+      x: 2000, // Правая часть карты
+      y: 800,
       title: 'Банк Maze',
       description: 'Центральное отделение банка с банкоматами',
       category: MARKER_CATEGORIES[3], // Банки
@@ -60,8 +61,8 @@ const Index = () => {
     },
     {
       id: '5',
-      x: 400,
-      y: 500,
+      x: 1200, // Центральная нижняя часть
+      y: 2400,
       title: 'Игровой клуб',
       description: 'Развлекательный центр с игровыми автоматами и бильярдом',
       category: MARKER_CATEGORIES[4], // Развлечения
@@ -182,11 +183,11 @@ const Index = () => {
               🗺️ GTA Map - Интерактивная карта
             </h1>
             <p className="text-gray-400 text-sm mt-1">
-              Управляйте метками и зонами на карте в стиле GTA 5
+              Управляйте метками и зонами на карте в стиле GTA 5 (7x10 тайлов)
             </p>
           </div>
           <div className="flex items-center gap-2 text-gta-blue">
-            <span className="text-sm">v1.0</span>
+            <span className="text-sm">v1.1</span>
           </div>
         </div>
       </div>
@@ -260,7 +261,7 @@ const Index = () => {
       <div className="bg-gta-dark border-t border-gray-600 px-6 py-2">
         <div className="flex items-center justify-between text-sm text-gray-400">
           <div>
-            Меток на карте: {markers.filter(m => selectedCategories.length === 0 || selectedCategories.includes(m.category.id)).length} | Зон: {zones.length}
+            Меток на карте: {markers.filter(m => selectedCategories.length === 0 || selectedCategories.includes(m.category.id)).length} | Зон: {zones.length} | Размер карты: 2800x4000px (7x10 тайлов)
           </div>
           <div className="flex items-center gap-4">
             <span>🖱️ Колесико мыши - масштабирование</span>

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { MapZone, ZONE_TYPES } from '@/types/map';
 import { Trash2, Plus, Edit2, Search } from 'lucide-react';
@@ -65,12 +64,16 @@ const ZoneManager: React.FC<ZoneManagerProps> = ({
 
   const handleAddZone = () => {
     if (newZoneName.trim() && newZoneDescription.trim()) {
-      // Создаем пример зоны для демонстрации
+      // Создаем пример зоны с правильными координатами для новой карты (2800x4000px)
+      const centerX = 1400; // Центр карты по X
+      const centerY = 2000; // Центр карты по Y
+      const size = 300; // Размер зоны
+      
       const examplePoints = [
-        { x: 300 + Math.random() * 200, y: 300 + Math.random() * 200 },
-        { x: 400 + Math.random() * 200, y: 300 + Math.random() * 200 },
-        { x: 400 + Math.random() * 200, y: 400 + Math.random() * 200 },
-        { x: 300 + Math.random() * 200, y: 400 + Math.random() * 200 }
+        { x: centerX - size + Math.random() * 200, y: centerY - size + Math.random() * 200 },
+        { x: centerX + size + Math.random() * 200, y: centerY - size + Math.random() * 200 },
+        { x: centerX + size + Math.random() * 200, y: centerY + size + Math.random() * 200 },
+        { x: centerX - size + Math.random() * 200, y: centerY + size + Math.random() * 200 }
       ];
 
       onAddZone({
@@ -85,7 +88,7 @@ const ZoneManager: React.FC<ZoneManagerProps> = ({
       setNewZoneDescription('');
       setShowAddForm(false);
       onToggleDrawing();
-      toast.success('Зона создана!');
+      toast.success('Зона создана в центре карты!');
     }
   };
 
@@ -166,6 +169,10 @@ const ZoneManager: React.FC<ZoneManagerProps> = ({
                 </option>
               ))}
             </select>
+          </div>
+
+          <div className="text-xs text-gray-400 bg-blue-900/20 p-2 rounded">
+            💡 Зона будет создана в центре карты. Размер карты: 2800x4000px (7x10 тайлов по 400px)
           </div>
 
           <div className="flex gap-2">
