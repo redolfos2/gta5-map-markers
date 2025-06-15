@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import GTAMap from '@/components/GTAMap';
 import CategoryFilter from '@/components/CategoryFilter';
@@ -18,6 +17,7 @@ const Index = () => {
 
   const [categories, setCategories] = useState<MarkerCategory[]>(MARKER_CATEGORIES);
   const [isDrawingMode, setIsDrawingMode] = useState(false);
+  const [focusedZone, setFocusedZone] = useState<string | null>(null);
 
   const [markers, setMarkers] = useState<MapMarker[]>([
     {
@@ -95,7 +95,10 @@ const Index = () => {
 
   const handleDeleteZone = useCallback((zoneId: string) => {
     setZones(prev => prev.filter(zone => zone.id !== zoneId));
-  }, []);
+    if (focusedZone === zoneId) {
+      setFocusedZone(null);
+    }
+  }, [focusedZone]);
 
   const handleEditZone = useCallback((zoneId: string, updates: Partial<MapZone>) => {
     setZones(prev => prev.map(zone => 
@@ -105,6 +108,18 @@ const Index = () => {
 
   const handleToggleDrawing = useCallback(() => {
     setIsDrawingMode(prev => !prev);
+  }, []);
+
+  const handleZoneSearch = useCallback((zoneId: string) => {
+    setFocusedZone(zoneId);
+    // Автоматически сбрасываем фокус через 5 секунд
+    setTimeout(() => {
+      setFocusedZone(null);
+    }, 5000);
+  }, []);
+
+  const handleZoneFocus = useCallback((zoneId: string | null) => {
+    setFocusedZone(zoneId);
   }, []);
 
   const handleAddCategory = useCallback((newCategory: Omit<MarkerCategory, 'id'>) => {
@@ -161,7 +176,7 @@ const Index = () => {
               🗺️ GTA Map - Интерактивная карта
             </h1>
             <p className="text-gray-400 text-sm mt-1">
-              Управляйте метками на карте в стиле GTA 5
+              Управляйте метками и зонами на карте в стиле GTA 5
             </p>
           </div>
           <div className="flex items-center gap-2 text-gta-blue">
@@ -193,6 +208,8 @@ const Index = () => {
                 onEditZone={handleEditZone}
                 isDrawingMode={isDrawingMode}
                 onToggleDrawing={handleToggleDrawing}
+                onZoneSearch={handleZoneSearch}
+                focusedZone={focusedZone}
               />
             </>
           )}
@@ -217,14 +234,12 @@ const Index = () => {
             user={user}
             markers={markers}
             zones={zones}
-            onAddMarker={handleAddMarker}
             onDeleteMarker={user.role === 'admin' ? handleDeleteMarker : undefined}
-            onAddZone={handleAddZone}
             onDeleteZone={user.role === 'admin' ? handleDeleteZone : undefined}
             selectedCategories={selectedCategories}
             availableCategories={categories}
-            isDrawingMode={isDrawingMode}
-            onToggleDrawing={handleToggleDrawing}
+            focusedZone={focusedZone}
+            onZoneFocus={handleZoneFocus}
           />
         </div>
       </div>
@@ -233,12 +248,12 @@ const Index = () => {
       <div className="bg-gta-dark border-t border-gray-600 px-6 py-2">
         <div className="flex items-center justify-between text-sm text-gray-400">
           <div>
-            Меток на карте: {markers.filter(m => selectedCategories.length === 0 || selectedCategories.includes(m.category.id)).length}
+            Меток на карте: {markers.filter(m => selectedCategories.length === 0 || selectedCategories.includes(m.category.id)).length} | Зон: {zones.length}
           </div>
           <div className="flex items-center gap-4">
             <span>🖱️ Колесико мыши - масштабирование</span>
             <span>🖱️ ЛКМ + перетаскивание - перемещение</span>
-            {user.role === 'admin' && <span>🖱️ Клик - добавить метку</span>}
+            <span>🔍 Поиск зон через боковое меню</span>
           </div>
         </div>
       </div>

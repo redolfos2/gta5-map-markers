@@ -1,6 +1,7 @@
+
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { MapMarker, MarkerCategory, User, MapZone, ZONE_TYPES } from '@/types/map';
-import { MapPin, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { toast } from 'sonner';
 
@@ -8,41 +9,36 @@ interface GTAMapProps {
   user: User;
   markers: MapMarker[];
   zones: MapZone[];
-  onAddMarker: (marker: Omit<MapMarker, 'id' | 'createdAt'>) => void;
   onDeleteMarker?: (markerId: string) => void;
-  onAddZone: (zone: Omit<MapZone, 'id' | 'createdAt'>) => void;
   onDeleteZone?: (zoneId: string) => void;
   selectedCategories: string[];
   availableCategories: MarkerCategory[];
-  isDrawingMode: boolean;
-  onToggleDrawing: () => void;
+  focusedZone?: string | null;
+  onZoneFocus?: (zoneId: string | null) => void;
 }
 
 const GTAMap: React.FC<GTAMapProps> = ({ 
   user, 
   markers, 
   zones,
-  onAddMarker,
   onDeleteMarker,
-  onAddZone,
   onDeleteZone,
   selectedCategories,
   availableCategories,
-  isDrawingMode,
-  onToggleDrawing
+  focusedZone,
+  onZoneFocus
 }) => {
   const [scale, setScale] = useState(0.5);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [showAddMarker, setShowAddMarker] = useState(false);
-  const [newMarkerPos, setNewMarkerPos] = useState({ x: 0, y: 0 });
   const [hoveredMarker, setHoveredMarker] = useState<string | null>(null);
-  const [currentZonePoints, setCurrentZonePoints] = useState<{ x: number; y: number }[]>([]);
-  const [showZoneForm, setShowZoneForm] = useState(false);
+  const [hoveredZone, setHoveredZone] = useState<string | null>(null);
   
   const mapRef = useRef<HTMLDivElement>(null);
   const MAP_SIZE = 2400;
+  const TILES_COUNT = 10;
+  const TILE_SIZE = MAP_SIZE / TILES_COUNT;
 
   // Инициализация позиции карты по центру
   useEffect(() => {
@@ -52,7 +48,26 @@ const GTAMap: React.FC<GTAMapProps> = ({
       const centerY = containerRect.height / 2 - (MAP_SIZE * scale) / 2;
       setPosition({ x: centerX, y: centerY });
     }
-  }, [scale]);
+  }, []);
+
+  // Обработка фокуса на зону
+  useEffect(() => {
+    if (focusedZone && mapRef.current) {
+      const zone = zones.find(z => z.id === focusedZone);
+      if (zone && zone.points.length > 0) {
+        // Находим центр зоны
+        const centerX = zone.points.reduce((sum, point) => sum + point.x, 0) / zone.points.length;
+        const centerY = zone.points.reduce((sum, point) => sum + point.y, 0) / zone.points.length;
+        
+        // Перемещаем карту к центру зоны
+        const containerRect = mapRef.current.getBoundingClientRect();
+        const newX = containerRect.width / 2 - centerX * scale;
+        const newY = containerRect.height / 2 - centerY * scale;
+        
+        setPosition({ x: newX, y: newY });
+      }
+    }
+  }, [focusedZone, zones, scale]);
 
   const filteredMarkers = markers.filter(marker => 
     selectedCategories.length === 0 || selectedCategories.includes(marker.category.id)
@@ -105,65 +120,6 @@ const GTAMap: React.FC<GTAMapProps> = ({
     setIsDragging(false);
   }, []);
 
-  const handleMapClick = useCallback((e: React.MouseEvent) => {
-    if (isDragging) return;
-    
-    const rect = mapRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    
-    const x = (e.clientX - rect.left - position.x) / scale;
-    const y = (e.clientY - rect.top - position.y) / scale;
-    
-    if (isDrawingMode) {
-      // Добавляем точку к текущей зоне
-      setCurrentZonePoints(prev => [...prev, { x, y }]);
-    } else if (user.role === 'admin') {
-      // Добавляем метку
-      setNewMarkerPos({ x, y });
-      setShowAddMarker(true);
-    }
-  }, [user.role, isDragging, position, scale, isDrawingMode]);
-
-  const handleDoubleClick = useCallback((e: React.MouseEvent) => {
-    if (isDrawingMode && currentZonePoints.length >= 3) {
-      // Завершаем рисование зоны
-      setShowZoneForm(true);
-    }
-  }, [isDrawingMode, currentZonePoints]);
-
-  const addMarker = (title: string, description: string, category: MarkerCategory) => {
-    onAddMarker({
-      x: newMarkerPos.x,
-      y: newMarkerPos.y,
-      title,
-      description,
-      category
-    });
-    setShowAddMarker(false);
-    toast.success('Метка добавлена!');
-  };
-
-  const addZone = (name: string, description: string, type: string) => {
-    const zoneType = ZONE_TYPES.find(t => t.id === type) || ZONE_TYPES[0];
-    onAddZone({
-      name,
-      description,
-      points: currentZonePoints,
-      color: zoneType.color,
-      type: type as 'safe' | 'danger' | 'neutral' | 'restricted'
-    });
-    setCurrentZonePoints([]);
-    setShowZoneForm(false);
-    onToggleDrawing();
-    toast.success('Зона создана!');
-  };
-
-  const cancelZoneDrawing = () => {
-    setCurrentZonePoints([]);
-    setShowZoneForm(false);
-    onToggleDrawing();
-  };
-
   const handleDeleteMarker = (markerId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (onDeleteMarker) {
@@ -184,13 +140,41 @@ const GTAMap: React.FC<GTAMapProps> = ({
   };
 
   const handleZoomIn = () => {
+    if (!mapRef.current) return;
+    
+    const rect = mapRef.current.getBoundingClientRect();
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    
+    const mapX = (centerX - position.x) / scale;
+    const mapY = (centerY - position.y) / scale;
+    
     const newScale = Math.min(2, scale + 0.2);
+    
+    const newX = centerX - mapX * newScale;
+    const newY = centerY - mapY * newScale;
+    
     setScale(newScale);
+    setPosition({ x: newX, y: newY });
   };
 
   const handleZoomOut = () => {
+    if (!mapRef.current) return;
+    
+    const rect = mapRef.current.getBoundingClientRect();
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    
+    const mapX = (centerX - position.x) / scale;
+    const mapY = (centerY - position.y) / scale;
+    
     const newScale = Math.max(0.2, scale - 0.2);
+    
+    const newX = centerX - mapX * newScale;
+    const newY = centerY - mapY * newScale;
+    
     setScale(newScale);
+    setPosition({ x: newX, y: newY });
   };
 
   // Функция для создания SVG пути из точек зоны
@@ -205,19 +189,46 @@ const GTAMap: React.FC<GTAMapProps> = ({
     return `${pathData}Z`;
   };
 
+  // Функция для создания сетки тайлов
+  const renderTileGrid = () => {
+    const tiles = [];
+    for (let row = 0; row < TILES_COUNT; row++) {
+      for (let col = 0; col < TILES_COUNT; col++) {
+        const x = col * TILE_SIZE;
+        const y = row * TILE_SIZE;
+        const tileName = `${col + 1}x${row + 1}`;
+        
+        tiles.push(
+          <div
+            key={tileName}
+            className="absolute border border-gray-400/30 flex items-center justify-center text-gray-400/50 text-xs pointer-events-none"
+            style={{
+              left: x,
+              top: y,
+              width: TILE_SIZE,
+              height: TILE_SIZE,
+              fontSize: Math.max(8, 12 * scale)
+            }}
+          >
+            {scale > 0.3 && tileName}
+          </div>
+        );
+      }
+    }
+    return tiles;
+  };
+
   return (
     <div className="relative w-full h-full overflow-hidden bg-gta-darker rounded-lg gta-border">
       {/* Контейнер карты */}
       <div
         ref={mapRef}
-        className={`w-full h-full relative ${isDrawingMode ? 'cursor-crosshair' : 'cursor-grab active:cursor-grabbing'}`}
+        className="w-full h-full relative cursor-grab active:cursor-grabbing"
         onWheel={handleWheel}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
-        onClick={handleMapClick}
-        onDoubleClick={handleDoubleClick}
         style={{
           backgroundColor: '#1862ad'
         }}
@@ -243,6 +254,9 @@ const GTAMap: React.FC<GTAMapProps> = ({
             }}
           />
 
+          {/* Сетка тайлов */}
+          {renderTileGrid()}
+
           {/* SVG для зон */}
           <svg
             className="absolute inset-0 pointer-events-none"
@@ -250,43 +264,70 @@ const GTAMap: React.FC<GTAMapProps> = ({
             height={MAP_SIZE}
             style={{ zIndex: 1 }}
           >
-            {/* Отрисовка существующих зон */}
+            {/* Отрисовка зон */}
             {zones.map(zone => (
-              <path
-                key={zone.id}
-                d={createZonePath(zone.points)}
-                fill={zone.color}
-                fillOpacity={0.3}
-                stroke={zone.color}
-                strokeWidth={2}
-                strokeOpacity={0.8}
-              />
-            ))}
-            
-            {/* Отрисовка текущей рисуемой зоны */}
-            {currentZonePoints.length > 0 && (
-              <>
+              <g key={zone.id}>
                 <path
-                  d={createZonePath(currentZonePoints)}
-                  fill="rgba(0, 212, 255, 0.3)"
-                  stroke="#00D4FF"
-                  strokeWidth={2}
-                  strokeDasharray="5,5"
+                  d={createZonePath(zone.points)}
+                  fill={zone.color}
+                  fillOpacity={focusedZone === zone.id ? 0.6 : 0.3}
+                  stroke={zone.color}
+                  strokeWidth={focusedZone === zone.id ? 4 : 2}
+                  strokeOpacity={focusedZone === zone.id ? 1 : 0.8}
+                  className="pointer-events-auto cursor-pointer"
+                  onMouseEnter={() => setHoveredZone(zone.id)}
+                  onMouseLeave={() => setHoveredZone(null)}
+                  onClick={() => onZoneFocus && onZoneFocus(zone.id)}
                 />
-                {currentZonePoints.map((point, index) => (
-                  <circle
-                    key={index}
-                    cx={point.x}
-                    cy={point.y}
-                    r={4}
-                    fill="#00D4FF"
-                    stroke="#fff"
-                    strokeWidth={2}
+                {/* Анимированная обводка для выбранной зоны */}
+                {focusedZone === zone.id && (
+                  <path
+                    d={createZonePath(zone.points)}
+                    fill="none"
+                    stroke="#00D4FF"
+                    strokeWidth={6}
+                    strokeOpacity={0.8}
+                    strokeDasharray="10,5"
+                    className="animate-pulse"
                   />
-                ))}
-              </>
-            )}
+                )}
+              </g>
+            ))}
           </svg>
+
+          {/* Подсказки для зон */}
+          {hoveredZone && (
+            <div
+              className="absolute bg-gta-dark border gta-border rounded-lg p-3 min-w-[200px] z-50 pointer-events-none"
+              style={{
+                left: zones.find(z => z.id === hoveredZone)?.points[0]?.x || 0,
+                top: (zones.find(z => z.id === hoveredZone)?.points[0]?.y || 0) - 60,
+                transform: 'translate(-50%, 0)'
+              }}
+            >
+              {(() => {
+                const zone = zones.find(z => z.id === hoveredZone);
+                if (!zone) return null;
+                return (
+                  <>
+                    <div className="text-sm font-semibold text-white">{zone.name}</div>
+                    <div className="text-xs text-gray-300 mt-1">{zone.description}</div>
+                    <div className="flex items-center justify-between mt-2">
+                      <span 
+                        className="text-xs px-2 py-1 rounded" 
+                        style={{ backgroundColor: zone.color + '20', color: zone.color }}
+                      >
+                        {ZONE_TYPES.find(t => t.id === zone.type)?.name}
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        {zone.points.length} точек
+                      </span>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+          )}
 
           {/* Метки */}
           {filteredMarkers.map((marker) => (
@@ -332,52 +373,8 @@ const GTAMap: React.FC<GTAMapProps> = ({
               )}
             </div>
           ))}
-
-          {/* Предварительная метка для администратора */}
-          {user.role === 'admin' && showAddMarker && (
-            <div
-              className="absolute animate-pulse-glow"
-              style={{
-                left: newMarkerPos.x,
-                top: newMarkerPos.y,
-                color: '#00D4FF',
-                transform: 'translate(-50%, -50%)',
-                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.8))',
-                zIndex: 2
-              }}
-            >
-              <MapPin size={24} />
-            </div>
-          )}
         </div>
       </div>
-
-      {/* Модальное окно добавления метки */}
-      {showAddMarker && user.role === 'admin' && (
-        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-gta-dark gta-border rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold text-white mb-4">Добавить метку</h3>
-            <AddMarkerForm
-              onAdd={addMarker}
-              onCancel={() => setShowAddMarker(false)}
-              availableCategories={availableCategories}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Модальное окно создания зоны */}
-      {showZoneForm && user.role === 'admin' && (
-        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-gta-dark gta-border rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold text-white mb-4">Создать зону</h3>
-            <AddZoneForm
-              onAdd={addZone}
-              onCancel={cancelZoneDrawing}
-            />
-          </div>
-        </div>
-      )}
 
       {/* Элементы управления */}
       <div className="absolute bottom-4 right-4 flex flex-col gap-2">
@@ -408,190 +405,9 @@ const GTAMap: React.FC<GTAMapProps> = ({
 
       {/* Инструкция */}
       <div className="absolute top-4 left-4 bg-gta-dark gta-border rounded px-3 py-1 text-sm">
-        {isDrawingMode ? (
-          <span className="text-gta-green">Режим рисования зон активен</span>
-        ) : user.role === 'admin' ? (
-          <span className="text-gta-green">Клик на карту для добавления метки</span>
-        ) : (
-          <span className="text-gray-300">Просмотр карты</span>
-        )}
+        <span className="text-gray-300">Просмотр карты • Клик на зону для выделения</span>
       </div>
     </div>
-  );
-};
-
-// Компонент формы добавления метки
-interface AddMarkerFormProps {
-  onAdd: (title: string, description: string, category: MarkerCategory) => void;
-  onCancel: () => void;
-  availableCategories: MarkerCategory[];
-}
-
-const AddMarkerForm: React.FC<AddMarkerFormProps> = ({ onAdd, onCancel, availableCategories }) => {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<MarkerCategory>(availableCategories[0]);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (title.trim() && description.trim()) {
-      onAdd(title, description, selectedCategory);
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-1">
-          Название
-        </label>
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="w-full px-3 py-2 bg-gta-darker border gta-border rounded text-white focus:outline-none focus:ring-2 focus:ring-gta-blue"
-          placeholder="Название метки"
-          required
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-1">
-          Описание
-        </label>
-        <textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          className="w-full px-3 py-2 bg-gta-darker border gta-border rounded text-white focus:outline-none focus:ring-2 focus:ring-gta-blue"
-          placeholder="Описание метки"
-          rows={3}
-          required
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-1">
-          Категория
-        </label>
-        <select
-          value={selectedCategory.id}
-          onChange={(e) => {
-            const category = availableCategories.find(c => c.id === e.target.value);
-            if (category) setSelectedCategory(category);
-          }}
-          className="w-full px-3 py-2 bg-gta-darker border gta-border rounded text-white focus:outline-none focus:ring-2 focus:ring-gta-blue"
-        >
-          {availableCategories.map(category => (
-            <option key={category.id} value={category.id}>
-              {category.name}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="flex gap-3">
-        <button
-          type="submit"
-          className="flex-1 gta-button"
-        >
-          Добавить
-        </button>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors"
-        >
-          Отмена
-        </button>
-      </div>
-    </form>
-  );
-};
-
-// Компонент формы добавления зоны
-interface AddZoneFormProps {
-  onAdd: (name: string, description: string, type: string) => void;
-  onCancel: () => void;
-}
-
-const AddZoneForm: React.FC<AddZoneFormProps> = ({ onAdd, onCancel }) => {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [selectedType, setSelectedType] = useState(ZONE_TYPES[0]);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (name.trim() && description.trim()) {
-      onAdd(name, description, selectedType.id);
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-1">
-          Название зоны
-        </label>
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="w-full px-3 py-2 bg-gta-darker border gta-border rounded text-white focus:outline-none focus:ring-2 focus:ring-gta-blue"
-          placeholder="Название зоны"
-          required
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-1">
-          Описание
-        </label>
-        <textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          className="w-full px-3 py-2 bg-gta-darker border gta-border rounded text-white focus:outline-none focus:ring-2 focus:ring-gta-blue"
-          placeholder="Описание зоны"
-          rows={3}
-          required
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-1">
-          Тип зоны
-        </label>
-        <select
-          value={selectedType.id}
-          onChange={(e) => {
-            const type = ZONE_TYPES.find(t => t.id === e.target.value);
-            if (type) setSelectedType(type);
-          }}
-          className="w-full px-3 py-2 bg-gta-darker border gta-border rounded text-white focus:outline-none focus:ring-2 focus:ring-gta-blue"
-        >
-          {ZONE_TYPES.map(type => (
-            <option key={type.id} value={type.id}>
-              {type.name}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="flex gap-3">
-        <button
-          type="submit"
-          className="flex-1 gta-button"
-        >
-          Создать зону
-        </button>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors"
-        >
-          Отмена
-        </button>
-      </div>
-    </form>
   );
 };
 
