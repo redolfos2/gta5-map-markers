@@ -66,8 +66,8 @@ export default {
 				gta: {
 					dark: '#0F1419',
 					darker: '#0A0D11',
-					blue: '#00D4FF',
-					green: '#4ECCA3',
+					blue: '#6B7280',
+					green: '#9CA3AF',
 					orange: '#FF6B35',
 					purple: '#8B5CF6',
 					yellow: '#FFC107'

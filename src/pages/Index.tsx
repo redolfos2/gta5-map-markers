@@ -186,7 +186,7 @@ const Index = () => {
               Управляйте метками и зонами на карте в стиле GTA 5 (7x10 тайлов)
             </p>
           </div>
-          <div className="flex items-center gap-2 text-gta-blue">
+          <div className="flex items-center gap-2 text-gray-400">
             <span className="text-sm">v1.1</span>
           </div>
         </div>

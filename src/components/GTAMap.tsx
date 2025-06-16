@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { MapMarker, MarkerCategory, User, MapZone, ZONE_TYPES } from '@/types/map';
 import { Trash2 } from 'lucide-react';
@@ -298,7 +299,7 @@ const GTAMap: React.FC<GTAMapProps> = ({
                   <path
                     d={createZonePath(zone.points)}
                     fill="none"
-                    stroke="#00D4FF"
+                    stroke="#6B7280"
                     strokeWidth={6}
                     strokeOpacity={0.8}
                     strokeDasharray="10,5"
@@ -394,26 +395,26 @@ const GTAMap: React.FC<GTAMapProps> = ({
       <div className="absolute bottom-4 right-4 flex flex-col gap-2">
         <button
           onClick={handleZoomIn}
-          className="bg-gta-dark gta-border rounded p-2 text-gta-blue hover:bg-gta-blue hover:text-gta-dark transition-colors"
+          className="bg-gta-dark gta-border rounded p-2 text-gray-400 hover:bg-gray-600 hover:text-white transition-colors"
         >
           +
         </button>
         <button
           onClick={handleZoomOut}
-          className="bg-gta-dark gta-border rounded p-2 text-gta-blue hover:bg-gta-blue hover:text-gta-dark transition-colors"
+          className="bg-gta-dark gta-border rounded p-2 text-gray-400 hover:bg-gray-600 hover:text-white transition-colors"
         >
           -
         </button>
         <button
           onClick={resetView}
-          className="bg-gta-dark gta-border rounded p-2 text-gta-blue hover:bg-gta-blue hover:text-gta-dark transition-colors text-xs"
+          className="bg-gta-dark gta-border rounded p-2 text-gray-400 hover:bg-gray-600 hover:text-white transition-colors text-xs"
         >
           Reset
         </button>
       </div>
 
       {/* Информация о масштабе */}
-      <div className="absolute top-4 right-4 bg-gta-dark gta-border rounded px-3 py-1 text-sm text-gta-blue">
+      <div className="absolute top-4 right-4 bg-gta-dark gta-border rounded px-3 py-1 text-sm text-gray-400">
         Масштаб: {Math.round(scale * 100)}%
       </div>
 

@@ -14,10 +14,10 @@
     --popover: 15 20 25;
     --popover-foreground: 255 255 255;
 
-    --primary: 0 212 255;
+    --primary: 107 114 128;
     --primary-foreground: 15 20 25;
 
-    --secondary: 78 204 163;
+    --secondary: 156 163 175;
     --secondary-foreground: 15 20 25;
 
     --muted: 30 35 40;
@@ -31,18 +31,18 @@
 
     --border: 30 35 40;
     --input: 30 35 40;
-    --ring: 0 212 255;
+    --ring: 107 114 128;
 
     --radius: 0.5rem;
 
     --sidebar-background: 15 20 25;
     --sidebar-foreground: 255 255 255;
-    --sidebar-primary: 0 212 255;
+    --sidebar-primary: 107 114 128;
     --sidebar-primary-foreground: 15 20 25;
     --sidebar-accent: 30 35 40;
     --sidebar-accent-foreground: 255 255 255;
     --sidebar-border: 30 35 40;
-    --sidebar-ring: 0 212 255;
+    --sidebar-ring: 107 114 128;
   }
 }
 
@@ -63,8 +63,8 @@
   }
   
   .gta-border {
-    border: 1px solid rgba(0, 212, 255, 0.3);
-    box-shadow: 0 0 10px rgba(0, 212, 255, 0.1);
+    border: 1px solid rgba(107, 114, 128, 0.3);
+    box-shadow: 0 0 10px rgba(107, 114, 128, 0.1);
   }
   
   .gta-button {
